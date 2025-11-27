@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
 
 // ⚠️ 여기만 실제 테이블 이름에 맞게 확인!
 // Supabase 테이블 이름이 storage_items 이면 그대로 두고,
