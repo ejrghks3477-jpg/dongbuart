@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { supabase } from "../lib/supabase"
 
 type Comment = {
@@ -15,38 +15,73 @@ export default function Home() {
   const [message, setMessage] = useState("")
   const [username, setUsername] = useState("")
   const [loading, setLoading] = useState(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   useEffect(() => {
     fetchComments()
   }, [])
 
+  // 댓글 목록 불러오기
   async function fetchComments() {
     const { data, error } = await supabase
       .from("comments")
       .select("*")
       .order("created_at", { ascending: false })
 
-    if (!error && data) {
-      setComments(data)
+    if (error) {
+      console.error(error)
+      return
     }
+
+    setComments((data ?? []) as Comment[])
   }
 
+  // 댓글 추가
   async function addComment() {
     if (!message.trim() || !username.trim()) return
+
     setLoading(true)
 
     const { error } = await supabase.from("comments").insert([
-      { username, message },
+      {
+        username,
+        message,
+      },
     ])
 
     setLoading(false)
+
     if (error) {
-      alert("저장 중 오류가 났어요 ㅠㅠ")
+      console.error(error)
+      alert("저장 중 오류가 발생했어요 ㅠㅠ")
       return
     }
 
     setMessage("")
-    fetchComments()
+    await fetchComments()
+  }
+
+  // 댓글 삭제
+  async function deleteComment(id: number) {
+    const ok = window.confirm("정말 이 댓글을 삭제할까요?")
+    if (!ok) return
+
+    setDeletingId(id)
+
+    const { error } = await supabase
+      .from("comments")
+      .delete()
+      .eq("id", id)
+
+    setDeletingId(null)
+
+    if (error) {
+      console.error(error)
+      alert("삭제 중 오류가 발생했어요 ㅠㅠ")
+      return
+    }
+
+    await fetchComments()
   }
 
   return (
@@ -84,7 +119,7 @@ export default function Home() {
               marginBottom: 8,
             }}
           >
-            dongbuart
+            DONGBUART
           </div>
           <h1 style={{ fontSize: 24, margin: 0, marginBottom: 4 }}>
             방명록 / 댓글 게시판
@@ -228,8 +263,35 @@ export default function Home() {
                     new Date(c.created_at).toLocaleString("ko-KR")}
                 </span>
               </div>
-              <div style={{ fontSize: 14, whiteSpace: "pre-wrap" }}>
+
+              <div
+                style={{
+                  fontSize: 14,
+                  whiteSpace: "pre-wrap",
+                  marginBottom: 6,
+                }}
+              >
                 {c.message}
+              </div>
+
+              {/* 삭제 버튼 */}
+              <div style={{ textAlign: "right" }}>
+                <button
+                  onClick={() => deleteComment(c.id)}
+                  disabled={deletingId === c.id}
+                  style={{
+                    fontSize: 11,
+                    padding: "4px 8px",
+                    borderRadius: 999,
+                    border: "1px solid #4b5563",
+                    background: "transparent",
+                    color: "#f97373",
+                    cursor:
+                      deletingId === c.id ? "default" : "pointer",
+                  }}
+                >
+                  {deletingId === c.id ? "삭제 중..." : "삭제"}
+                </button>
               </div>
             </div>
           ))}
@@ -238,4 +300,3 @@ export default function Home() {
     </div>
   )
 }
-// test update
