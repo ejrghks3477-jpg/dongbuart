@@ -112,6 +112,7 @@ export default function HomePage() {
   // ==========================
   //  자유 게시판
   // ==========================
+  
   async function loadComments() {
     try {
       const { data, error } = await supabase
@@ -132,34 +133,58 @@ export default function HomePage() {
   }
 
   async function addComment(e: FormEvent) {
-    e.preventDefault();
-    if (!message.trim()) {
-      alert("메시지를 입력해 주세요.");
-      return;
-    }
+  e.preventDefault();
 
-    setIsCommentSubmitting(true);
-    try {
-      const { error } = await supabase.from(COMMENT_TABLE).insert({
-        username: username.trim() || "익명",
-        message: message.trim(),
-      });
+  // 1) 로그인 여부 먼저 확인
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-      if (error) {
-        console.error("댓글 작성 에러:", error);
-        alert("댓글 작성 중 오류가 발생했습니다.");
-        return;
-      }
-
-      setMessage("");
-      await loadComments();
-    } catch (e) {
-      console.error(e);
-      alert("댓글 작성 중 오류가 발생했습니다.");
-    } finally {
-      setIsCommentSubmitting(false);
-    }
+  if (userError) {
+    console.error(userError);
+    alert("로그인 상태를 확인하는 중 오류가 발생했습니다.");
+    return;
   }
+
+  if (!user) {
+    alert("로그인해야만 글을 쓸 수 있습니다.");
+    return;
+  }
+
+  // 2) 입력값 검사
+  if (!username.trim() || !message.trim()) {
+    alert("닉네임과 메시지를 모두 입력해주세요.");
+    return;
+  }
+
+  setIsSaving(true);
+
+  const { error } = await supabase.from(COMMENT_TABLE).insert({
+    username,
+    message,
+    // user_id 컬럼을 쓰고 있다면 같이 저장
+    // user_id: user.id,
+  });
+
+  setIsSaving(false);
+
+  if (error) {
+    console.error(error);
+
+    // RLS 때문에 막힌 경우(혹시 모를 대비용)
+    if (error.code === "42501") {
+      alert("로그인해야만 글을 쓸 수 있습니다.");
+    } else {
+      alert("저장 중 오류가 발생했습니다.");
+    }
+    return;
+  }
+
+  setUsername("");
+  setMessage("");
+  await loadComments();
+}
 
   async function deleteComment(id: number) {
     if (!confirm("정말 이 댓글을 삭제할까요?")) return;
