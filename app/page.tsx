@@ -1,94 +1,57 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { supabase } from "../lib/supabase"
-
-type Comment = {
-  id: number
-  username: string | null
-  message: string | null
-  created_at: string
-}
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { supabase } from "../lib/supabase";
 
 export default function Home() {
-  const [comments, setComments] = useState<Comment[]>([])
-  const [message, setMessage] = useState("")
-  const [username, setUsername] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [username, setUsername] = useState("");
+  const [message, setMessage] = useState("");
+  const [comments, setComments] = useState([]);
 
-  useEffect(() => {
-    fetchComments()
-  }, [])
-
-  // 댓글 목록 불러오기
-  async function fetchComments() {
+  // 댓글 불러오기
+  const fetchComments = async () => {
     const { data, error } = await supabase
       .from("comments")
       .select("*")
-      .order("created_at", { ascending: false })
+      .order("id", { ascending: false });
 
-    if (error) {
-      console.error(error)
-      return
+    if (!error) {
+      setComments(data || []);
     }
+  };
 
-    setComments((data ?? []) as Comment[])
-  }
+  useEffect(() => {
+    fetchComments();
+  }, []);
 
-  // 댓글 추가
-  async function addComment() {
-    if (!message.trim() || !username.trim()) return
+  // 댓글 작성
+  const addComment = async () => {
+    if (!username.trim() || !message.trim()) return;
 
-    setLoading(true)
+    const { error } = await supabase.from("comments").insert({
+      username,
+      message,
+    });
 
-    const { error } = await supabase.from("comments").insert([
-      {
-        username,
-        message,
-      },
-    ])
-
-    setLoading(false)
-
-    if (error) {
-      console.error(error)
-      alert("저장 중 오류가 발생했어요 ㅠㅠ")
-      return
+    if (!error) {
+      setUsername("");
+      setMessage("");
+      fetchComments();
     }
-
-    setMessage("")
-    await fetchComments()
-  }
+  };
 
   // 댓글 삭제
-  async function deleteComment(id: number) {
-    const ok = window.confirm("정말 이 댓글을 삭제할까요?")
-    if (!ok) return
-
-    setDeletingId(id)
-
-    const { error } = await supabase
-      .from("comments")
-      .delete()
-      .eq("id", id)
-
-    setDeletingId(null)
-
-    if (error) {
-      console.error(error)
-      alert("삭제 중 오류가 발생했어요 ㅠㅠ")
-      return
-    }
-
-    await fetchComments()
-  }
+  const deleteComment = async (id: number) => {
+    await supabase.from("comments").delete().eq("id", id);
+    fetchComments();
+  };
 
   return (
     <div
       style={{
         minHeight: "100vh",
-        background: "#020617", // 전체 배경
+        background: "#020617",
         display: "flex",
         justifyContent: "center",
         alignItems: "flex-start",
@@ -97,149 +60,167 @@ export default function Home() {
         fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 520,
-          background: "rgba(15,23,42,0.95)",
-          borderRadius: 16,
-          padding: 24,
-          boxShadow: "0 20px 40px rgba(0,0,0,0.5)",
-          border: "1px solid rgba(148,163,184,0.4)",
-        }}
-      >
-        {/* 헤더 */}
-        <div style={{ marginBottom: 20 }}>
-          <div
-            style={{
-              fontSize: 12,
-              letterSpacing: 4,
-              textTransform: "uppercase",
-              color: "#38bdf8",
-              marginBottom: 8,
-            }}
-          >
-            DONGBUART
-          </div>
-          <h1 style={{ fontSize: 24, margin: 0, marginBottom: 4 }}>
-            방명록 / 댓글 게시판
-          </h1>
-          <p
-            style={{
-              margin: 0,
-              fontSize: 13,
-              color: "#9ca3af",
-            }}
-          >
-            닉네임이랑 하고 싶은 말 아무거나 남겨보세요 :)
-          </p>
-        </div>
+      <div style={{ width: "100%", maxWidth: 520 }}>
 
-        {/* 입력 폼 */}
+        {/* 상단 대분류 버튼 영역 */}
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
             gap: 8,
-            marginBottom: 20,
+            marginBottom: 16,
           }}
         >
-          <input
-            placeholder="닉네임"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+          <Link
+            href="/"
             style={{
-              width: "100%",
-              padding: "10px 12px",
-              borderRadius: 8,
+              flex: 1,
+              textAlign: "center",
+              padding: "8px 10px",
+              borderRadius: 999,
+              border: "1px solid #22c55e",
+              background: "#22c55e",
+              color: "#020617",
+              fontSize: 13,
+              fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
+            자유 게시판
+          </Link>
+
+          <Link
+            href="/storage"
+            style={{
+              flex: 1,
+              textAlign: "center",
+              padding: "8px 10px",
+              borderRadius: 999,
               border: "1px solid #4b5563",
               background: "#020617",
-              color: "white",
+              color: "#e5e7eb",
+              fontSize: 13,
+              fontWeight: 500,
+              textDecoration: "none",
+            }}
+          >
+            수장고 관리
+          </Link>
+
+          <Link
+            href="/vehicle"
+            style={{
+              flex: 1,
+              textAlign: "center",
+              padding: "8px 10px",
+              borderRadius: 999,
+              border: "1px solid #4b5563",
+              background: "#020617",
+              color: "#e5e7eb",
+              fontSize: 13,
+              fontWeight: 500,
+              textDecoration: "none",
+            }}
+          >
+            차량 관리
+          </Link>
+        </div>
+
+        {/* 메인 카드 박스 */}
+        <div
+          style={{
+            width: "100%",
+            background: "rgba(15,23,42,0.95)",
+            borderRadius: 16,
+            padding: 24,
+            boxShadow: "0 20px 40px rgba(0,0,0,0.5)",
+            border: "1px solid rgba(148,163,184,0.4)",
+          }}
+        >
+          <h2
+            style={{
               fontSize: 14,
-              outline: "none",
+              letterSpacing: 2,
+              color: "#60a5fa",
+              marginBottom: 10,
+            }}
+          >
+            DONGBUART
+          </h2>
+
+          <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>
+            방명록 / 댓글 게시판
+          </h1>
+
+          <p style={{ fontSize: 14, color: "#94a3b8", marginBottom: 20 }}>
+            닉네임이랑 하고 싶은 말 아무거나 남겨보세요 :)
+          </p>
+
+          {/* 입력 폼 */}
+          <input
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="닉네임"
+            style={{
+              width: "100%",
+              padding: "12px 14px",
+              borderRadius: 12,
+              border: "1px solid #334155",
+              background: "#0f172a",
+              marginBottom: 10,
+              fontSize: 14,
+              color: "white",
             }}
           />
 
           <textarea
-            placeholder="메시지 입력..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
+            placeholder="메시지 입력..."
             style={{
               width: "100%",
-              padding: "10px 12px",
-              borderRadius: 8,
-              border: "1px solid #4b5563",
-              background: "#020617",
-              color: "white",
+              padding: "12px 14px",
+              borderRadius: 12,
+              border: "1px solid #334155",
+              background: "#0f172a",
+              marginBottom: 12,
               fontSize: 14,
-              minHeight: 80,
-              resize: "vertical",
-              outline: "none",
+              color: "white",
+              height: 80,
             }}
           />
 
           <button
             onClick={addComment}
-            disabled={loading}
             style={{
-              marginTop: 4,
-              padding: "10px 14px",
-              borderRadius: 999,
+              width: "100%",
+              padding: "14px 0",
+              borderRadius: 12,
+              background: "#22c55e",
               border: "none",
-              background: loading ? "#4b5563" : "#22c55e",
-              color: "black",
-              cursor: loading ? "default" : "pointer",
-              fontWeight: 600,
-              fontSize: 14,
+              color: "#020617",
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: "pointer",
+              marginBottom: 18,
             }}
           >
-            {loading ? "작성 중..." : "작성하기"}
+            작성하기
           </button>
-        </div>
 
-        {/* 카운트 */}
-        <div
-          style={{
-            fontSize: 12,
-            color: "#9ca3af",
-            marginBottom: 8,
-          }}
-        >
-          총 {comments.length}개의 댓글
-        </div>
+          <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 12 }}>
+            총 {comments.length}개의 댓글
+          </p>
 
-        <div
-          style={{
-            height: 1,
-            background:
-              "linear-gradient(to right, transparent, #4b5563, transparent)",
-            marginBottom: 12,
-          }}
-        />
-
-        {/* 댓글 리스트 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {comments.length === 0 && (
+          {/* 댓글 목록 */}
+          {comments.map((item) => (
             <div
+              key={item.id}
               style={{
-                fontSize: 13,
-                color: "#6b7280",
-                textAlign: "center",
-                padding: "12px 0",
-              }}
-            >
-              아직 댓글이 없습니다. 첫 댓글의 주인공이 되어보세요 👀
-            </div>
-          )}
-
-          {comments.map((c) => (
-            <div
-              key={c.id}
-              style={{
-                padding: 12,
-                borderRadius: 10,
-                background: "#020617",
-                border: "1px solid #1f2937",
+                background: "#0f172a",
+                padding: 16,
+                borderRadius: 12,
+                marginBottom: 12,
+                border: "1px solid #1e293b",
               }}
             >
               <div
@@ -247,56 +228,35 @@ export default function Home() {
                   display: "flex",
                   justifyContent: "space-between",
                   marginBottom: 4,
-                  alignItems: "center",
                 }}
               >
-                <span style={{ fontWeight: 600 }}>
-                  {c.username || "익명"}
-                </span>
-                <span
-                  style={{
-                    fontSize: 11,
-                    color: "#6b7280",
-                  }}
-                >
-                  {c.created_at &&
-                    new Date(c.created_at).toLocaleString("ko-KR")}
+                <strong>{item.username}</strong>
+                <span style={{ fontSize: 12, color: "#94a3b8" }}>
+                  {new Date(item.created_at).toLocaleString()}
                 </span>
               </div>
 
-              <div
-                style={{
-                  fontSize: 14,
-                  whiteSpace: "pre-wrap",
-                  marginBottom: 6,
-                }}
-              >
-                {c.message}
-              </div>
+              <p style={{ marginBottom: 10 }}>{item.message}</p>
 
               {/* 삭제 버튼 */}
-              <div style={{ textAlign: "right" }}>
-                <button
-                  onClick={() => deleteComment(c.id)}
-                  disabled={deletingId === c.id}
-                  style={{
-                    fontSize: 11,
-                    padding: "4px 8px",
-                    borderRadius: 999,
-                    border: "1px solid #4b5563",
-                    background: "transparent",
-                    color: "#f97373",
-                    cursor:
-                      deletingId === c.id ? "default" : "pointer",
-                  }}
-                >
-                  {deletingId === c.id ? "삭제 중..." : "삭제"}
-                </button>
-              </div>
+              <button
+                onClick={() => deleteComment(item.id)}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  background: "#ef4444",
+                  color: "white",
+                  fontSize: 12,
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                삭제
+              </button>
             </div>
           ))}
         </div>
       </div>
     </div>
-  )
+  );
 }
