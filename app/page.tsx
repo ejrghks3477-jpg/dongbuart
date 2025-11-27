@@ -143,7 +143,7 @@ export default function HomePage() {
 
   if (userError) {
     console.error(userError);
-    alert("로그인 상태를 확인하는 중 오류가 발생했습니다.");
+    alert("로그인 해야만 글을 쓸 수 있습니다.");
     return;
   }
 
