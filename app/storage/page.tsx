@@ -483,6 +483,7 @@ export default function HomePage() {
                 />
                 <button
                   type="button"
+                  onClick={handleSubmit}
                   disabled={isCommentSubmitting}
                   className="mt-2 w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-60"
                 >
