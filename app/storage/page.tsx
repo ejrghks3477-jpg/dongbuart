@@ -44,6 +44,39 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<Tab>("board");
 
   // ====== 자유 게시판 상태 ======
+  // HomePage 함수 안에, return 위에 넣기
+const handleSubmit = async () => {
+  // 버튼이 눌렸는지 확인용
+  alert("작성하기 버튼 눌림!");
+
+  // 메시지가 비었으면 막기
+  if (!message.trim()) {
+    alert("내용을 입력해 주세요.");
+    return;
+  }
+
+  // 로딩 상태 켜기
+  setIsCommentSubmitting(true);
+
+  try {
+    // TODO: 여기에서 supabase에 댓글 저장하는 코드 넣기
+    // 예시:
+    // const { error } = await supabase
+    //   .from("comments")
+    //   .insert({ message });
+
+    // if (error) throw error;
+
+    // 입력창 비우기
+    setMessage("");
+  } catch (err) {
+    console.error(err);
+    alert("작성 중 오류가 발생했습니다.");
+  } finally {
+    // 로딩 상태 끄기
+    setIsCommentSubmitting(false);
+  }
+};
   const [comments, setComments] = useState<Comment[]>([]);
   const [username, setUsername] = useState("");
   const [message, setMessage] = useState("");
