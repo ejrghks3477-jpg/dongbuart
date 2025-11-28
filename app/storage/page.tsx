@@ -482,7 +482,7 @@ export default function HomePage() {
                   className="min-h-[90px] w-full resize-none rounded-lg bg-slate-800/80 px-4 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none ring-1 ring-slate-700 focus:ring-2 focus:ring-emerald-400/80"
                 />
                 <button
-                  type="submit"
+                  type="button"
                   disabled={isCommentSubmitting}
                   className="mt-2 w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-60"
                 >
